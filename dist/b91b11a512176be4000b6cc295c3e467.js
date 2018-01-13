@@ -69,7 +69,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({7:[function(require,module,exports) {
+})({5:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41042,7 +41042,7 @@ exports.GeometryUtils = GeometryUtils;
 exports.ImageUtils = ImageUtils;
 exports.Projector = Projector;
 exports.CanvasRenderer = CanvasRenderer;
-},{}],6:[function(require,module,exports) {
+},{}],4:[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var THREE = require("three");
@@ -41074,7 +41074,7 @@ var ThreeD = /** @class */ (function () {
 }());
 exports.default = ThreeD;
 //# sourceMappingURL=threeD.js.map
-},{"three":7}],5:[function(require,module,exports) {
+},{"three":5}],3:[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var THREE = require("three");
@@ -41096,14 +41096,14 @@ var Jump = /** @class */ (function () {
 }());
 exports.default = Jump;
 //# sourceMappingURL=jump.js.map
-},{"three":7,"./threeD":6}],4:[function(require,module,exports) {
+},{"three":5,"./threeD":4}],2:[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var jump_1 = require("./jump");
 var jump = new jump_1.default();
 jump.gameStart();
 //# sourceMappingURL=index.js.map
-},{"./jump":5}],0:[function(require,module,exports) {
+},{"./jump":3}],0:[function(require,module,exports) {
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
 function Module() {
@@ -41121,7 +41121,7 @@ function Module() {
 module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
-  var ws = new WebSocket('ws://' + window.location.hostname + ':58939/');
+  var ws = new WebSocket('ws://' + window.location.hostname + ':63222/');
   ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
 
@@ -41222,4 +41222,4 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id)
   });
 }
-},{}]},{},[0,4])
+},{}]},{},[0,2])
