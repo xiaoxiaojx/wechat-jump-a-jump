@@ -1,0 +1,28 @@
+{
+  "name": "wechatjumpajump",
+  "version": "1.0.0",
+  "description": "a game",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel index.html",
+    "build": "parcel build index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoxiaojx/WeChatJumpAJump.git"
+  },
+  "author": "XiaoJiaxin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xiaoxiaojx/WeChatJumpAJump/issues"
+  },
+  "homepage": "https://github.com/xiaoxiaojx/WeChatJumpAJump#readme",
+  "dependencies": {
+    "three": "^0.89.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.89.2",
+    "typescript": "^2.6.2"
+  }
+}

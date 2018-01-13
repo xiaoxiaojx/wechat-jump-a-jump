@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"noImplicitAny": false,
+		"sourceMap": true,
+	    "strictNullChecks": true,
+		"experimentalDecorators": true,
+		"noUnusedLocals": true,
+        "checkJs": true,
+        "lib":[
+            "dom",
+            "es5",
+            "es6",
+            "ES2015",
+            "es7"
+        ]
+    },
+    "include": [
+        "./*.ts",
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
