@@ -41046,29 +41046,200 @@ exports.CanvasRenderer = CanvasRenderer;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var THREE = require("three");
+var Direction;
+(function (Direction) {
+    Direction["TOP"] = "TOP";
+    Direction["RIGHT"] = "RIGHT";
+    Direction["NONE"] = "NONE";
+})(Direction || (Direction = {}));
+var JumpStatus;
+(function (JumpStatus) {
+    JumpStatus["NOMAL"] = "NOMAL";
+    JumpStatus["READY"] = "READY";
+    JumpStatus["FLIGHT"] = "FLIGHT";
+    JumpStatus["FLIGHTEND"] = "FLIGHTEND";
+})(JumpStatus || (JumpStatus = {}));
+var PositionRelation;
+(function (PositionRelation) {
+    PositionRelation["CENTER"] = "CENTER";
+    PositionRelation["OUTSIDE"] = "OUTSIDE";
+    PositionRelation["EDGE"] = "EDGE";
+})(PositionRelation || (PositionRelation = {}));
 var ThreeD = /** @class */ (function () {
     function ThreeD(parms) {
+        this.cubeItems = [];
+        this.playerJumpStatus = JumpStatus.NOMAL;
+        this.playerSpeed = { d: 0, y: 0 };
+        this.dynamicParms = Object.create(parms);
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-        this.light = new THREE.AmbientLight(parms.lightColor);
+        this.camera = new THREE.PerspectiveCamera(6, window.innerWidth / window.innerHeight, 1, 10000);
+        this.light1 = new THREE.AmbientLight(0xffffff, 0.3);
+        this.light2 = new THREE.DirectionalLight(0xffffff, 0.5);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.initCamera(parms.cameraPositon, parms.cameraLookPositon);
+        this.initCamera();
         this.initLight();
+        this.readyToJump = this.readyToJump.bind(this);
+        this.recoveryScale = this.recoveryScale.bind(this);
+        this.startFlight = this.startFlight.bind(this);
     }
-    ThreeD.prototype.initCamera = function (cameraPositon, cameraLookPositon) {
+    ThreeD.prototype.initCamera = function () {
+        var _a = this.dynamicParms, cameraPositon = _a.cameraPositon, cameraLookPositon = _a.cameraLookPositon;
         this.camera.position.set(cameraPositon.x, cameraPositon.y, cameraPositon.z);
         this.camera.lookAt(cameraLookPositon);
     };
     ThreeD.prototype.initLight = function () {
-        this.light.position.set(100, 100, 100);
-        this.scene.add(this.light);
+        this.light1.position.set(0, 0, 100);
+        this.light2.position.set(8, 3, 0);
+        this.scene.add(this.light1);
+        this.scene.add(this.light2);
     };
-    ThreeD.prototype.startRender = function (color) {
+    ThreeD.prototype.initRender = function () {
+        var renderClearColor = this.dynamicParms.renderClearColor;
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setClearColor(new THREE.Color(color), 1.0);
+        this.renderer.setClearColor(new THREE.Color(renderClearColor), 1.0);
         document.body.appendChild(this.renderer.domElement);
         this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
+    };
+    ThreeD.prototype.addPlayer = function () {
+        var _a = this.dynamicParms, playerColor = _a.playerColor, playerWidth = _a.playerWidth, playerDeep = _a.playerDeep, playerheight = _a.playerheight;
+        var material = new THREE.MeshLambertMaterial({ color: new THREE.Color(playerColor) });
+        var geometry = new THREE.CubeGeometry(playerWidth, playerheight, playerDeep);
+        geometry.translate(0, playerDeep, 0);
+        var mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 1, 0);
+        this.player = mesh;
+        this.scene.add(mesh);
+        this.renderer.render(this.scene, this.camera);
+    };
+    ThreeD.prototype.addCube = function () {
+        var _a = this.dynamicParms, cubeColor = _a.cubeColor, cubeWidth = _a.cubeWidth, cubeHeight = _a.cubeHeight, cubeDeep = _a.cubeDeep;
+        var material = new THREE.MeshLambertMaterial({ color: new THREE.Color(cubeColor) });
+        var geometry = new THREE.CubeGeometry(cubeWidth, cubeHeight, cubeDeep);
+        var mesh = new THREE.Mesh(geometry, material);
+        var position = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        if (this.cubeItems.length !== 0) {
+            var lastCube = this.cubeItems[this.cubeItems.length - 1];
+            position = this.getDirection() === Direction.RIGHT ?
+                {
+                    x: lastCube.position.x,
+                    y: lastCube.position.y,
+                    z: lastCube.position.z - (this.getDistance() + this.dynamicParms.cubeDeep)
+                }
+                :
+                    {
+                        x: lastCube.position.x - (this.getDistance() + this.dynamicParms.cubeWidth),
+                        y: lastCube.position.y,
+                        z: lastCube.position.z
+                    };
+        }
+        mesh.position.set(position.x, position.y, position.z);
+        this.cubeItems.push(mesh);
+        this.scene.add(mesh);
+        this.renderer.render(this.scene, this.camera);
+    };
+    ThreeD.prototype.readyToJump = function () {
+        var playerMinScale = this.dynamicParms.playerMinScale;
+        if (this.playerJumpStatus === JumpStatus.READY && this.player.scale.y > playerMinScale) {
+            this.player.scale.y -= 0.01;
+            this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(this.readyToJump);
+        }
+    };
+    ThreeD.prototype.recoveryScale = function () {
+        if (this.playerJumpStatus === JumpStatus.FLIGHT && this.player.scale.y < 1) {
+            this.player.scale.y += 0.05;
+            this.playerSpeed.d += this.dynamicParms.playerSpeedD;
+            this.playerSpeed.y += this.dynamicParms.playerSpeedY;
+            this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(this.recoveryScale);
+        }
+    };
+    ThreeD.prototype.startFlight = function () {
+        var lastCube = this.cubeItems[this.cubeItems.length - 1];
+        var secCube = this.cubeItems[this.cubeItems.length - 2];
+        if (this.playerJumpStatus === JumpStatus.FLIGHT && this.player.position.y >= 1) {
+            var direct = lastCube.position.x === secCube.position.x ?
+                "z" : "x";
+            this.player.position.y += this.playerSpeed.y;
+            this.player.position[direct] -= this.playerSpeed.d;
+            this.playerSpeed.y -= 0.01;
+            this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(this.startFlight);
+        }
+        else {
+            this.playerJumpStatus = JumpStatus.FLIGHTEND;
+            this.player.position.y = 1;
+            this.renderer.render(this.scene, this.camera);
+            this.judgePosition();
+        }
+    };
+    ThreeD.prototype.failureAnimation = function () {
+    };
+    ThreeD.prototype.judgePosition = function () {
+        var lastCube = this.cubeItems[this.cubeItems.length - 1];
+        var secCube = this.cubeItems[this.cubeItems.length - 2];
+        var direct = lastCube.position.x === secCube.position.x ?
+            "z" : "x";
+        var relation = this.getPositionRelation({
+            d: this.player.position[direct],
+            dWidth: direct === "z" ? this.dynamicParms.playerDeep : this.dynamicParms.playerWidth
+        }, {
+            d: lastCube.position[direct],
+            dWidth: direct === "z" ? this.dynamicParms.cubeDeep : this.dynamicParms.cubeWidth
+        });
+        switch (relation) {
+            case PositionRelation.CENTER:
+                this.playerJumpStatus = JumpStatus.NOMAL;
+                this.addCube();
+                break;
+            case PositionRelation.EDGE:
+                this.failureAnimation();
+                break;
+            default:
+                console.log("Game Over");
+        }
+    };
+    ThreeD.prototype.getDirection = function () {
+        return Math.random() > 0.5 ? Direction.TOP : Direction.RIGHT;
+    };
+    ThreeD.prototype.getDistance = function () {
+        return Math.random() * this.dynamicParms.maxDistance;
+    };
+    ThreeD.prototype.getPositionRelation = function (s1, s2) {
+        if (s1.d + s1.dWidth / 2 < s2.d - s2.dWidth / 2 || s1.d - s1.dWidth / 2 > s2.d + s2.dWidth / 2) {
+            return PositionRelation.OUTSIDE;
+        }
+        else if (s1.d > s2.d - s2.dWidth / 2 && s1.d < s2.d + s2.dWidth / 2) {
+            return PositionRelation.CENTER;
+        }
+        else {
+            return PositionRelation.EDGE;
+        }
+    };
+    ThreeD.prototype.handleMousedown = function () {
+        switch (this.playerJumpStatus) {
+            case JumpStatus.NOMAL:
+                this.playerJumpStatus = JumpStatus.READY;
+                this.readyToJump();
+        }
+    };
+    ThreeD.prototype.handleMouseup = function () {
+        switch (this.playerJumpStatus) {
+            case JumpStatus.READY:
+                this.playerJumpStatus = JumpStatus.FLIGHT;
+                this.recoveryScale();
+                this.startFlight();
+        }
+    };
+    ThreeD.prototype.addMouseListener = function () {
+        var _self = this;
+        window.addEventListener("mousedown", _self.handleMousedown.bind(_self), false);
+        window.addEventListener("mouseup", _self.handleMouseup.bind(_self), false);
     };
     return ThreeD;
 }());
@@ -41082,15 +41253,34 @@ var threeD_1 = require("./threeD");
 var Jump = /** @class */ (function () {
     function Jump() {
         this.config = {
-            cameraPositon: new THREE.Vector3(100, 100, 100),
-            cameraLookPositon: new THREE.Vector3(100, 0, 100),
+            cameraPositon: {
+                x: 100,
+                y: 100,
+                z: 100
+            },
+            cameraLookPositon: new THREE.Vector3(0, 0, 0),
             renderClearColor: "#fbde9f",
-            lightColor: "#fff"
+            cubeColor: 0xbebebe,
+            cubeWidth: 4,
+            cubeHeight: 2,
+            cubeDeep: 4,
+            maxDistance: 5,
+            playerColor: "red",
+            playerWidth: 1,
+            playerheight: 2,
+            playerDeep: 1,
+            playerMinScale: 0.1,
+            playerSpeedD: 0.016,
+            playerSpeedY: 0.032
         };
         this.threeD = new threeD_1.default(this.config);
     }
     Jump.prototype.gameStart = function () {
-        this.threeD.startRender(this.config.renderClearColor);
+        this.threeD.initRender();
+        this.threeD.addCube();
+        this.threeD.addCube();
+        this.threeD.addPlayer();
+        this.threeD.addMouseListener();
     };
     return Jump;
 }());
@@ -41121,7 +41311,7 @@ function Module() {
 module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
-  var ws = new WebSocket('ws://' + window.location.hostname + ':63222/');
+  var ws = new WebSocket('ws://' + window.location.hostname + ':63645/');
   ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
 
