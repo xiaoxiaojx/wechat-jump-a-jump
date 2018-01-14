@@ -38,7 +38,7 @@ interface PlayerSpeed {
 export interface ThreeDParms {
     renderClearColor: string;
     maxDistance: number;
-    cubeColor: number;
+    cubeColor: string;
     cubeWidth: number;
     cubeHeight: number;
     cubeDeep: number;
@@ -56,11 +56,10 @@ export default class ThreeD {
         this.dynamicParms = Object.create(parms);
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(6, window.innerWidth / window.innerHeight, 1, 10000);
-        this.light1 = new THREE.AmbientLight(0xffffff, 0.3);
-        this.light2 = new THREE.DirectionalLight(0xffffff, 0.5);
+        this.light1 = new THREE.AmbientLight(0xffffff, 0.8);
+        this.light2 = new THREE.DirectionalLight(0xffffff, 0.1);
         this.renderer = new THREE.WebGLRenderer({ antialias : true });
 
-        this.initCamera();
         this.initLight();
         this.readyToJump = this.readyToJump.bind(this);
         this.recoveryScale = this.recoveryScale.bind(this);
@@ -72,18 +71,18 @@ export default class ThreeD {
     private readonly renderer: THREE.WebGLRenderer;
     private readonly light1: THREE.AmbientLight;
     private readonly light2: THREE.DirectionalLight;
-    private readonly cubeItems: THREE.Mesh[] = [];
+    private cubeItems: THREE.Mesh[] = [];
     private readonly dynamicParms: ThreeDParms;
     private lookAtPositin: Position = {x: 0, y: 0, z: 0};
     private player: THREE.Mesh;
     private playerJumpStatus: JumpStatus = JumpStatus.NOMAL;
     private playerSpeed: PlayerSpeed = {d: 0, y: 0};
 
-    private initCamera(): void {
+    public initCamera(): void {
         this.camera.position.set(100, 100, 100);
         this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
     }
-    private initLight(): void {
+    public initLight(): void {
         this.light1.position.set(0, 0, 100);
         this.light2.position.set(8, 3, 0);
         this.scene.add(this.light1);
@@ -95,6 +94,15 @@ export default class ThreeD {
         this.renderer.setClearColor(new THREE.Color(renderClearColor), 1.0);
         document.body.appendChild(this.renderer.domElement);
         this.renderer.clear();
+        this.renderer.render(this.scene, this.camera);
+    }
+    public initProperty(): void {
+        this.playerJumpStatus = JumpStatus.NOMAL;
+        this.lookAtPositin = {x: 0, y: 0, z: 0};
+        this.playerSpeed = {d: 0, y: 0};
+        this.scene.remove(this.player);
+        this.cubeItems.forEach(item => this.scene.remove(item));
+        this.cubeItems = [];
         this.renderer.render(this.scene, this.camera);
     }
     public addPlayer(): void {
@@ -220,8 +228,8 @@ export default class ThreeD {
     private moveCameralook(): void {
         const lastCube = this.cubeItems[this.cubeItems.length -1];
         const secCube = this.cubeItems[this.cubeItems.length -2];
-        const targetX = (lastCube.position.x + secCube.position.x) /2;
-        const targetZ = (lastCube.position.z + secCube.position.z) /2;
+        const targetX = (lastCube.position.x + secCube.position.x) /2 + 4;
+        const targetZ = (lastCube.position.z + secCube.position.z) /2 + 4;
         const currentX = this.lookAtPositin.x;
         const currentZ = this.lookAtPositin.z;
         if (currentX > targetX) {

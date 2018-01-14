@@ -12,8 +12,7 @@ class Jump {
     }
     private readonly config: JumpConfig = {
         renderClearColor: "#fbde9f",
-        lookAtPositin: {x: 0, y: 0, z: 0},
-        cubeColor: 0xbebebe,
+        cubeColor: "#ca746e",
         cubeWidth: 4,
         cubeHeight: 2,
         cubeDeep: 4,
@@ -27,9 +26,24 @@ class Jump {
         playerSpeedY: 0.008
     }
     private readonly threeD: ThreeD;
+    private addRestartListener(): void {
+        const _self = this;
+        const restart: HTMLButtonElement = document.getElementById("restart") as HTMLButtonElement;
+        restart.addEventListener("click", _self.gameRestart.bind(_self));
+    }
 
     public gameStart(): void {
         this.threeD.initRender();
+        this.threeD.initCamera();
+        this.threeD.addCube();
+        this.threeD.addCube();
+        this.threeD.addPlayer();
+        this.addRestartListener();
+        this.threeD.addMouseListener();
+    }
+    public gameRestart(): void {
+        this.threeD.initProperty();
+        this.threeD.initCamera();
         this.threeD.addCube();
         this.threeD.addCube();
         this.threeD.addPlayer();

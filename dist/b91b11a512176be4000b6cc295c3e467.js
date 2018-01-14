@@ -41074,10 +41074,9 @@ var ThreeD = /** @class */ (function () {
         this.dynamicParms = Object.create(parms);
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(6, window.innerWidth / window.innerHeight, 1, 10000);
-        this.light1 = new THREE.AmbientLight(0xffffff, 0.3);
-        this.light2 = new THREE.DirectionalLight(0xffffff, 0.5);
+        this.light1 = new THREE.AmbientLight(0xffffff, 0.8);
+        this.light2 = new THREE.DirectionalLight(0xffffff, 0.1);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.initCamera();
         this.initLight();
         this.readyToJump = this.readyToJump.bind(this);
         this.recoveryScale = this.recoveryScale.bind(this);
@@ -41100,6 +41099,16 @@ var ThreeD = /** @class */ (function () {
         this.renderer.setClearColor(new THREE.Color(renderClearColor), 1.0);
         document.body.appendChild(this.renderer.domElement);
         this.renderer.clear();
+        this.renderer.render(this.scene, this.camera);
+    };
+    ThreeD.prototype.initProperty = function () {
+        var _this = this;
+        this.playerJumpStatus = JumpStatus.NOMAL;
+        this.lookAtPositin = { x: 0, y: 0, z: 0 };
+        this.playerSpeed = { d: 0, y: 0 };
+        this.scene.remove(this.player);
+        this.cubeItems.forEach(function (item) { return _this.scene.remove(item); });
+        this.cubeItems = [];
         this.renderer.render(this.scene, this.camera);
     };
     ThreeD.prototype.addPlayer = function () {
@@ -41232,8 +41241,8 @@ var ThreeD = /** @class */ (function () {
     ThreeD.prototype.moveCameralook = function () {
         var lastCube = this.cubeItems[this.cubeItems.length - 1];
         var secCube = this.cubeItems[this.cubeItems.length - 2];
-        var targetX = (lastCube.position.x + secCube.position.x) / 2;
-        var targetZ = (lastCube.position.z + secCube.position.z) / 2;
+        var targetX = (lastCube.position.x + secCube.position.x) / 2 + 4;
+        var targetZ = (lastCube.position.z + secCube.position.z) / 2 + 4;
         var currentX = this.lookAtPositin.x;
         var currentZ = this.lookAtPositin.z;
         if (currentX > targetX) {
@@ -41329,8 +41338,7 @@ var Jump = /** @class */ (function () {
     function Jump() {
         this.config = {
             renderClearColor: "#fbde9f",
-            lookAtPositin: { x: 0, y: 0, z: 0 },
-            cubeColor: 0xbebebe,
+            cubeColor: "#ca746e",
             cubeWidth: 4,
             cubeHeight: 2,
             cubeDeep: 4,
@@ -41345,8 +41353,23 @@ var Jump = /** @class */ (function () {
         };
         this.threeD = new threeD_1.default(this.config);
     }
+    Jump.prototype.addRestartListener = function () {
+        var _self = this;
+        var restart = document.getElementById("restart");
+        restart.addEventListener("click", _self.gameRestart.bind(_self));
+    };
     Jump.prototype.gameStart = function () {
         this.threeD.initRender();
+        this.threeD.initCamera();
+        this.threeD.addCube();
+        this.threeD.addCube();
+        this.threeD.addPlayer();
+        this.addRestartListener();
+        this.threeD.addMouseListener();
+    };
+    Jump.prototype.gameRestart = function () {
+        this.threeD.initProperty();
+        this.threeD.initCamera();
         this.threeD.addCube();
         this.threeD.addCube();
         this.threeD.addPlayer();
@@ -41381,7 +41404,7 @@ function Module() {
 module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
-  var ws = new WebSocket('ws://' + window.location.hostname + ':49331/');
+  var ws = new WebSocket('ws://' + window.location.hostname + ':59280/');
   ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
 
