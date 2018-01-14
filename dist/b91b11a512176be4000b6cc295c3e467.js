@@ -41081,7 +41081,7 @@ var ThreeD = /** @class */ (function () {
         this.readyToJump = this.readyToJump.bind(this);
         this.recoveryScale = this.recoveryScale.bind(this);
         this.startFlight = this.startFlight.bind(this);
-        this.moveCameralook = this.moveCameralook.bind(this);
+        this.moveCameraLook = this.moveCameraLook.bind(this);
     }
     ThreeD.prototype.initCamera = function () {
         this.camera.position.set(100, 100, 100);
@@ -41237,8 +41237,9 @@ var ThreeD = /** @class */ (function () {
     ThreeD.prototype.declineAnimation = function () {
         this.player.position.y = 0;
         this.renderer.render(this.scene, this.camera);
+        this.removeMouseListener();
     };
-    ThreeD.prototype.moveCameralook = function () {
+    ThreeD.prototype.moveCameraLook = function () {
         var lastCube = this.cubeItems[this.cubeItems.length - 1];
         var secCube = this.cubeItems[this.cubeItems.length - 2];
         var targetX = (lastCube.position.x + secCube.position.x) / 2 + 4;
@@ -41249,13 +41250,13 @@ var ThreeD = /** @class */ (function () {
             this.lookAtPositin.x = currentX - 0.2;
             this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
             this.renderer.render(this.scene, this.camera);
-            requestAnimationFrame(this.moveCameralook);
+            requestAnimationFrame(this.moveCameraLook);
         }
         else if (currentZ > targetZ) {
             this.lookAtPositin.z = currentZ - 0.2;
             this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
             this.renderer.render(this.scene, this.camera);
-            requestAnimationFrame(this.moveCameralook);
+            requestAnimationFrame(this.moveCameraLook);
         }
     };
     ThreeD.prototype.judgePosition = function () {
@@ -41275,7 +41276,7 @@ var ThreeD = /** @class */ (function () {
             case PositionRelation.CENTER:
                 this.playerJumpStatus = JumpStatus.NOMAL;
                 this.addCube();
-                setTimeout(function () { return _self.moveCameralook(); }, 500);
+                setTimeout(function () { return _self.moveCameraLook(); }, 500);
                 break;
             case PositionRelation.EDGE:
                 this.failureAnimation();
@@ -41310,6 +41311,7 @@ var ThreeD = /** @class */ (function () {
             case JumpStatus.NOMAL:
                 this.playerJumpStatus = JumpStatus.READY;
                 this.readyToJump();
+                break;
         }
     };
     ThreeD.prototype.handleMouseup = function () {
@@ -41318,6 +41320,7 @@ var ThreeD = /** @class */ (function () {
                 this.playerJumpStatus = JumpStatus.FLIGHT;
                 this.recoveryScale();
                 this.startFlight(this.playerSpeed.y);
+                break;
         }
     };
     ThreeD.prototype.addMouseListener = function () {
@@ -41325,6 +41328,12 @@ var ThreeD = /** @class */ (function () {
         var canvas = document.querySelector("canvas");
         canvas.addEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
         canvas.addEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
+    };
+    ThreeD.prototype.removeMouseListener = function () {
+        var _self = this;
+        var canvas = document.querySelector("canvas");
+        canvas.removeEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
+        canvas.removeEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
     };
     return ThreeD;
 }());

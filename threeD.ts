@@ -64,15 +64,15 @@ export default class ThreeD {
         this.readyToJump = this.readyToJump.bind(this);
         this.recoveryScale = this.recoveryScale.bind(this);
         this.startFlight = this.startFlight.bind(this);
-        this.moveCameralook = this.moveCameralook.bind(this);
+        this.moveCameraLook = this.moveCameraLook.bind(this);
     }
     private readonly scene: THREE.Scene;
     private readonly camera: THREE.Camera;
     private readonly renderer: THREE.WebGLRenderer;
     private readonly light1: THREE.AmbientLight;
     private readonly light2: THREE.DirectionalLight;
-    private cubeItems: THREE.Mesh[] = [];
     private readonly dynamicParms: ThreeDParms;
+    private cubeItems: THREE.Mesh[] = [];
     private lookAtPositin: Position = {x: 0, y: 0, z: 0};
     private player: THREE.Mesh;
     private playerJumpStatus: JumpStatus = JumpStatus.NOMAL;
@@ -224,8 +224,9 @@ export default class ThreeD {
     private declineAnimation(): void {
         this.player.position.y = 0;
         this.renderer.render(this.scene, this.camera);
+        this.removeMouseListener();
     }
-    private moveCameralook(): void {
+    private moveCameraLook(): void {
         const lastCube = this.cubeItems[this.cubeItems.length -1];
         const secCube = this.cubeItems[this.cubeItems.length -2];
         const targetX = (lastCube.position.x + secCube.position.x) /2 + 4;
@@ -236,15 +237,15 @@ export default class ThreeD {
             this.lookAtPositin.x =  currentX - 0.2;
             this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
             this.renderer.render(this.scene, this.camera);
-            requestAnimationFrame(this.moveCameralook);
+            requestAnimationFrame(this.moveCameraLook);
         } else if (currentZ > targetZ) {
             this.lookAtPositin.z =  currentZ - 0.2;
             this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
             this.renderer.render(this.scene, this.camera);
-            requestAnimationFrame(this.moveCameralook);
+            requestAnimationFrame(this.moveCameraLook);
         }
     }
-    private judgePosition() {
+    private judgePosition(): void {
         const _self = this;
         const lastCube = this.cubeItems[this.cubeItems.length -1];
         const secCube = this.cubeItems[this.cubeItems.length -2];
@@ -261,7 +262,7 @@ export default class ThreeD {
             case PositionRelation.CENTER:
                 this.playerJumpStatus = JumpStatus.NOMAL;
                 this.addCube();
-                setTimeout(() => _self.moveCameralook(), 500)
+                setTimeout(() => _self.moveCameraLook(), 500)
                 break;
             case PositionRelation.EDGE:
                 this.failureAnimation();
@@ -297,6 +298,7 @@ export default class ThreeD {
             case JumpStatus.NOMAL:
                 this.playerJumpStatus = JumpStatus.READY;
                 this.readyToJump();
+            break;
         }
     }
     private handleMouseup(): void {
@@ -305,6 +307,7 @@ export default class ThreeD {
                 this.playerJumpStatus = JumpStatus.FLIGHT;
                 this.recoveryScale();
                 this.startFlight(this.playerSpeed.y);
+            break;
         }
     }
     public addMouseListener(): void {
@@ -313,5 +316,10 @@ export default class ThreeD {
         canvas.addEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
         canvas.addEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
     }
-
+    public removeMouseListener(): void {
+        const _self = this;
+        const canvas: HTMLCanvasElement = document.querySelector("canvas") as HTMLCanvasElement;
+        canvas.removeEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
+        canvas.removeEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
+    }
 }
