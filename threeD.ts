@@ -36,8 +36,6 @@ interface PlayerSpeed {
 }
 
 export interface ThreeDParms {
-    cameraPositon: Position;
-    cameraLookPositon: THREE.Vector3;
     renderClearColor: string;
     maxDistance: number;
     cubeColor: number;
@@ -67,6 +65,7 @@ export default class ThreeD {
         this.readyToJump = this.readyToJump.bind(this);
         this.recoveryScale = this.recoveryScale.bind(this);
         this.startFlight = this.startFlight.bind(this);
+        this.moveCameralook = this.moveCameralook.bind(this);
     }
     private readonly scene: THREE.Scene;
     private readonly camera: THREE.Camera;
@@ -75,14 +74,14 @@ export default class ThreeD {
     private readonly light2: THREE.DirectionalLight;
     private readonly cubeItems: THREE.Mesh[] = [];
     private readonly dynamicParms: ThreeDParms;
+    private lookAtPositin: Position = {x: 0, y: 0, z: 0};
     private player: THREE.Mesh;
     private playerJumpStatus: JumpStatus = JumpStatus.NOMAL;
     private playerSpeed: PlayerSpeed = {d: 0, y: 0};
 
     private initCamera(): void {
-        const { cameraPositon, cameraLookPositon } = this.dynamicParms;
-        this.camera.position.set(cameraPositon.x, cameraPositon.y, cameraPositon.z);
-        this.camera.lookAt(cameraLookPositon);
+        this.camera.position.set(100, 100, 100);
+        this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
     }
     private initLight(): void {
         this.light1.position.set(0, 0, 100);
@@ -134,6 +133,9 @@ export default class ThreeD {
                     z: lastCube.position.z
                 }
         }
+        if ( this.cubeItems.length >= 10) {
+            this.scene.remove(this.cubeItems.shift() as THREE.Mesh);
+        }
         mesh.position.set(position.x, position.y, position.z);
         this.cubeItems.push(mesh)
         this.scene.add(mesh);
@@ -143,6 +145,8 @@ export default class ThreeD {
         const { playerMinScale } = this.dynamicParms;
         if(this.playerJumpStatus === JumpStatus.READY && this.player.scale.y > playerMinScale) {
             this.player.scale.y -= 0.01;
+            this.playerSpeed.d += this.dynamicParms.playerSpeedD;
+            this.playerSpeed.y += this.dynamicParms.playerSpeedY;
             this.renderer.render(this.scene, this.camera);
             requestAnimationFrame(this.readyToJump)
         }
@@ -150,34 +154,90 @@ export default class ThreeD {
     private recoveryScale(): void {
         if (this.playerJumpStatus === JumpStatus.FLIGHT && this.player.scale.y < 1) {
             this.player.scale.y += 0.05;
-            this.playerSpeed.d += this.dynamicParms.playerSpeedD;
-            this.playerSpeed.y += this.dynamicParms.playerSpeedY;
             this.renderer.render(this.scene, this.camera);
             requestAnimationFrame(this.recoveryScale)
         }
     }
-    private startFlight(): void {
+    private startFlight(playerSpeedY: number): void {
+        const _slef = this;
+        let speedY = playerSpeedY;
         const lastCube = this.cubeItems[this.cubeItems.length -1];
         const secCube = this.cubeItems[this.cubeItems.length -2];
         if (this.playerJumpStatus === JumpStatus.FLIGHT && this.player.position.y >= 1) {
             const direct = lastCube.position.x === secCube.position.x ?
                 "z" : "x";
-            this.player.position.y += this.playerSpeed.y;
+            this.player.position.y += speedY;
             this.player.position[direct] -= this.playerSpeed.d;
-            this.playerSpeed.y -= 0.01
+            speedY -= 0.01
             this.renderer.render(this.scene, this.camera);
-            requestAnimationFrame(this.startFlight);
+            requestAnimationFrame(() => _slef.startFlight(speedY));
         } else {
             this.playerJumpStatus = JumpStatus.FLIGHTEND;
             this.player.position.y = 1;
             this.renderer.render(this.scene, this.camera);
+            this.playerSpeed.d = 0;
+            this.playerSpeed.y = 0;
             this.judgePosition();
         }
     }
-    private failureAnimation(): void {
+    private failureAnimation(angle: number = 0, condition: boolean = true): void {
+        const lastCube = this.cubeItems[this.cubeItems.length -1];
+        const secCube = this.cubeItems[this.cubeItems.length -2];
+        const direct = lastCube.position.x === secCube.position.x ?
+            Direction.RIGHT : Direction.TOP;
+        const step = 0.1;
 
+        if (condition) {
+            if (direct === Direction.RIGHT) {
+                if (this.player.position.z > lastCube.position.z) {
+                    this.player.rotation.x = angle + step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(() => this.failureAnimation(angle + step, angle + step < Math.PI/2));
+                } else {
+                    this.player.rotation.x = angle - step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(() => this.failureAnimation(angle - step, angle - step > -Math.PI/2))
+                }
+            } else {
+                if (this.player.position.x > lastCube.position.x) {
+                    this.player.rotation.z = angle - step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(() => this.failureAnimation(angle - step, angle - step > -Math.PI/2));
+                } else {
+                    this.player.rotation.z = angle + step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(() => this.failureAnimation(angle + step, angle + step < Math.PI/2))
+                }
+            }
+        } else {
+            this.declineAnimation();
+        }
+    }
+    private declineAnimation(): void {
+        this.player.position.y = 0;
+        this.renderer.render(this.scene, this.camera);
+    }
+    private moveCameralook(): void {
+        const lastCube = this.cubeItems[this.cubeItems.length -1];
+        const secCube = this.cubeItems[this.cubeItems.length -2];
+        const targetX = (lastCube.position.x + secCube.position.x) /2;
+        const targetZ = (lastCube.position.z + secCube.position.z) /2;
+        const currentX = this.lookAtPositin.x;
+        const currentZ = this.lookAtPositin.z;
+        if (currentX > targetX) {
+            this.lookAtPositin.x =  currentX - 0.2;
+            this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
+            this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(this.moveCameralook);
+        } else if (currentZ > targetZ) {
+            this.lookAtPositin.z =  currentZ - 0.2;
+            this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
+            this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(this.moveCameralook);
+        }
     }
     private judgePosition() {
+        const _self = this;
         const lastCube = this.cubeItems[this.cubeItems.length -1];
         const secCube = this.cubeItems[this.cubeItems.length -2];
         const direct = lastCube.position.x === secCube.position.x ?
@@ -193,12 +253,13 @@ export default class ThreeD {
             case PositionRelation.CENTER:
                 this.playerJumpStatus = JumpStatus.NOMAL;
                 this.addCube();
+                setTimeout(() => _self.moveCameralook(), 500)
                 break;
             case PositionRelation.EDGE:
                 this.failureAnimation();
                 break;
             default:
-                console.log("Game Over");
+                this.declineAnimation();
         }
     }
 
@@ -219,6 +280,10 @@ export default class ThreeD {
             return PositionRelation.EDGE;
         }
     }
+    private isPC(): boolean {
+        const n = navigator.userAgent;
+        return !Boolean(n.match(/Android/i) || n.match(/webOS/i) || n.match(/iPhone/i) || n.match(/iPad/i) || n.match(/iPod/i) || n.match(/BlackBerry/i));
+    }
     private handleMousedown(): void {
         switch (this.playerJumpStatus) {
             case JumpStatus.NOMAL:
@@ -231,13 +296,14 @@ export default class ThreeD {
             case JumpStatus.READY:
                 this.playerJumpStatus = JumpStatus.FLIGHT;
                 this.recoveryScale();
-                this.startFlight();
+                this.startFlight(this.playerSpeed.y);
         }
     }
     public addMouseListener(): void {
         const _self = this;
-        window.addEventListener("mousedown", _self.handleMousedown.bind(_self), false);
-        window.addEventListener("mouseup", _self.handleMouseup.bind(_self), false);
+        const canvas: HTMLCanvasElement = document.querySelector("canvas") as HTMLCanvasElement;
+        canvas.addEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
+        canvas.addEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
     }
 
 }

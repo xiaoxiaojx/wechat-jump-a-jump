@@ -11,13 +11,8 @@ class Jump {
         this.threeD = new ThreeD(this.config);
     }
     private readonly config: JumpConfig = {
-        cameraPositon: {
-            x: 100,
-            y: 100,
-            z: 100
-        },
-        cameraLookPositon: new THREE.Vector3(0, 0, 0),
         renderClearColor: "#fbde9f",
+        lookAtPositin: {x: 0, y: 0, z: 0},
         cubeColor: 0xbebebe,
         cubeWidth: 4,
         cubeHeight: 2,
@@ -28,8 +23,8 @@ class Jump {
         playerheight: 2,
         playerDeep: 1,
         playerMinScale: 0.1,
-        playerSpeedD: 0.016,
-        playerSpeedY: 0.032
+        playerSpeedD: 0.004,
+        playerSpeedY: 0.008
     }
     private readonly threeD: ThreeD;
 

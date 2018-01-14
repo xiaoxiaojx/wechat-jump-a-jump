@@ -41068,6 +41068,7 @@ var PositionRelation;
 var ThreeD = /** @class */ (function () {
     function ThreeD(parms) {
         this.cubeItems = [];
+        this.lookAtPositin = { x: 0, y: 0, z: 0 };
         this.playerJumpStatus = JumpStatus.NOMAL;
         this.playerSpeed = { d: 0, y: 0 };
         this.dynamicParms = Object.create(parms);
@@ -41081,11 +41082,11 @@ var ThreeD = /** @class */ (function () {
         this.readyToJump = this.readyToJump.bind(this);
         this.recoveryScale = this.recoveryScale.bind(this);
         this.startFlight = this.startFlight.bind(this);
+        this.moveCameralook = this.moveCameralook.bind(this);
     }
     ThreeD.prototype.initCamera = function () {
-        var _a = this.dynamicParms, cameraPositon = _a.cameraPositon, cameraLookPositon = _a.cameraLookPositon;
-        this.camera.position.set(cameraPositon.x, cameraPositon.y, cameraPositon.z);
-        this.camera.lookAt(cameraLookPositon);
+        this.camera.position.set(100, 100, 100);
+        this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
     };
     ThreeD.prototype.initLight = function () {
         this.light1.position.set(0, 0, 100);
@@ -41137,6 +41138,9 @@ var ThreeD = /** @class */ (function () {
                         z: lastCube.position.z
                     };
         }
+        if (this.cubeItems.length >= 10) {
+            this.scene.remove(this.cubeItems.shift());
+        }
         mesh.position.set(position.x, position.y, position.z);
         this.cubeItems.push(mesh);
         this.scene.add(mesh);
@@ -41146,6 +41150,8 @@ var ThreeD = /** @class */ (function () {
         var playerMinScale = this.dynamicParms.playerMinScale;
         if (this.playerJumpStatus === JumpStatus.READY && this.player.scale.y > playerMinScale) {
             this.player.scale.y -= 0.01;
+            this.playerSpeed.d += this.dynamicParms.playerSpeedD;
+            this.playerSpeed.y += this.dynamicParms.playerSpeedY;
             this.renderer.render(this.scene, this.camera);
             requestAnimationFrame(this.readyToJump);
         }
@@ -41153,34 +41159,98 @@ var ThreeD = /** @class */ (function () {
     ThreeD.prototype.recoveryScale = function () {
         if (this.playerJumpStatus === JumpStatus.FLIGHT && this.player.scale.y < 1) {
             this.player.scale.y += 0.05;
-            this.playerSpeed.d += this.dynamicParms.playerSpeedD;
-            this.playerSpeed.y += this.dynamicParms.playerSpeedY;
             this.renderer.render(this.scene, this.camera);
             requestAnimationFrame(this.recoveryScale);
         }
     };
-    ThreeD.prototype.startFlight = function () {
+    ThreeD.prototype.startFlight = function (playerSpeedY) {
+        var _slef = this;
+        var speedY = playerSpeedY;
         var lastCube = this.cubeItems[this.cubeItems.length - 1];
         var secCube = this.cubeItems[this.cubeItems.length - 2];
         if (this.playerJumpStatus === JumpStatus.FLIGHT && this.player.position.y >= 1) {
             var direct = lastCube.position.x === secCube.position.x ?
                 "z" : "x";
-            this.player.position.y += this.playerSpeed.y;
+            this.player.position.y += speedY;
             this.player.position[direct] -= this.playerSpeed.d;
-            this.playerSpeed.y -= 0.01;
+            speedY -= 0.01;
             this.renderer.render(this.scene, this.camera);
-            requestAnimationFrame(this.startFlight);
+            requestAnimationFrame(function () { return _slef.startFlight(speedY); });
         }
         else {
             this.playerJumpStatus = JumpStatus.FLIGHTEND;
             this.player.position.y = 1;
             this.renderer.render(this.scene, this.camera);
+            this.playerSpeed.d = 0;
+            this.playerSpeed.y = 0;
             this.judgePosition();
         }
     };
-    ThreeD.prototype.failureAnimation = function () {
+    ThreeD.prototype.failureAnimation = function (angle, condition) {
+        var _this = this;
+        if (angle === void 0) { angle = 0; }
+        if (condition === void 0) { condition = true; }
+        var lastCube = this.cubeItems[this.cubeItems.length - 1];
+        var secCube = this.cubeItems[this.cubeItems.length - 2];
+        var direct = lastCube.position.x === secCube.position.x ?
+            Direction.RIGHT : Direction.TOP;
+        var step = 0.1;
+        if (condition) {
+            if (direct === Direction.RIGHT) {
+                if (this.player.position.z > lastCube.position.z) {
+                    this.player.rotation.x = angle + step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(function () { return _this.failureAnimation(angle + step, angle + step < Math.PI / 2); });
+                }
+                else {
+                    this.player.rotation.x = angle - step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(function () { return _this.failureAnimation(angle - step, angle - step > -Math.PI / 2); });
+                }
+            }
+            else {
+                if (this.player.position.x > lastCube.position.x) {
+                    this.player.rotation.z = angle - step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(function () { return _this.failureAnimation(angle - step, angle - step > -Math.PI / 2); });
+                }
+                else {
+                    this.player.rotation.z = angle + step;
+                    this.renderer.render(this.scene, this.camera);
+                    requestAnimationFrame(function () { return _this.failureAnimation(angle + step, angle + step < Math.PI / 2); });
+                }
+            }
+        }
+        else {
+            this.declineAnimation();
+        }
+    };
+    ThreeD.prototype.declineAnimation = function () {
+        this.player.position.y = 0;
+        this.renderer.render(this.scene, this.camera);
+    };
+    ThreeD.prototype.moveCameralook = function () {
+        var lastCube = this.cubeItems[this.cubeItems.length - 1];
+        var secCube = this.cubeItems[this.cubeItems.length - 2];
+        var targetX = (lastCube.position.x + secCube.position.x) / 2;
+        var targetZ = (lastCube.position.z + secCube.position.z) / 2;
+        var currentX = this.lookAtPositin.x;
+        var currentZ = this.lookAtPositin.z;
+        if (currentX > targetX) {
+            this.lookAtPositin.x = currentX - 0.2;
+            this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
+            this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(this.moveCameralook);
+        }
+        else if (currentZ > targetZ) {
+            this.lookAtPositin.z = currentZ - 0.2;
+            this.camera.lookAt(new THREE.Vector3(this.lookAtPositin.x, this.lookAtPositin.y, this.lookAtPositin.z));
+            this.renderer.render(this.scene, this.camera);
+            requestAnimationFrame(this.moveCameralook);
+        }
     };
     ThreeD.prototype.judgePosition = function () {
+        var _self = this;
         var lastCube = this.cubeItems[this.cubeItems.length - 1];
         var secCube = this.cubeItems[this.cubeItems.length - 2];
         var direct = lastCube.position.x === secCube.position.x ?
@@ -41196,12 +41266,13 @@ var ThreeD = /** @class */ (function () {
             case PositionRelation.CENTER:
                 this.playerJumpStatus = JumpStatus.NOMAL;
                 this.addCube();
+                setTimeout(function () { return _self.moveCameralook(); }, 500);
                 break;
             case PositionRelation.EDGE:
                 this.failureAnimation();
                 break;
             default:
-                console.log("Game Over");
+                this.declineAnimation();
         }
     };
     ThreeD.prototype.getDirection = function () {
@@ -41221,6 +41292,10 @@ var ThreeD = /** @class */ (function () {
             return PositionRelation.EDGE;
         }
     };
+    ThreeD.prototype.isPC = function () {
+        var n = navigator.userAgent;
+        return !Boolean(n.match(/Android/i) || n.match(/webOS/i) || n.match(/iPhone/i) || n.match(/iPad/i) || n.match(/iPod/i) || n.match(/BlackBerry/i));
+    };
     ThreeD.prototype.handleMousedown = function () {
         switch (this.playerJumpStatus) {
             case JumpStatus.NOMAL:
@@ -41233,13 +41308,14 @@ var ThreeD = /** @class */ (function () {
             case JumpStatus.READY:
                 this.playerJumpStatus = JumpStatus.FLIGHT;
                 this.recoveryScale();
-                this.startFlight();
+                this.startFlight(this.playerSpeed.y);
         }
     };
     ThreeD.prototype.addMouseListener = function () {
         var _self = this;
-        window.addEventListener("mousedown", _self.handleMousedown.bind(_self), false);
-        window.addEventListener("mouseup", _self.handleMouseup.bind(_self), false);
+        var canvas = document.querySelector("canvas");
+        canvas.addEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
+        canvas.addEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
     };
     return ThreeD;
 }());
@@ -41248,18 +41324,12 @@ exports.default = ThreeD;
 },{"three":5}],3:[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var THREE = require("three");
 var threeD_1 = require("./threeD");
 var Jump = /** @class */ (function () {
     function Jump() {
         this.config = {
-            cameraPositon: {
-                x: 100,
-                y: 100,
-                z: 100
-            },
-            cameraLookPositon: new THREE.Vector3(0, 0, 0),
             renderClearColor: "#fbde9f",
+            lookAtPositin: { x: 0, y: 0, z: 0 },
             cubeColor: 0xbebebe,
             cubeWidth: 4,
             cubeHeight: 2,
@@ -41270,8 +41340,8 @@ var Jump = /** @class */ (function () {
             playerheight: 2,
             playerDeep: 1,
             playerMinScale: 0.1,
-            playerSpeedD: 0.016,
-            playerSpeedY: 0.032
+            playerSpeedD: 0.004,
+            playerSpeedY: 0.008
         };
         this.threeD = new threeD_1.default(this.config);
     }
@@ -41286,7 +41356,7 @@ var Jump = /** @class */ (function () {
 }());
 exports.default = Jump;
 //# sourceMappingURL=jump.js.map
-},{"three":5,"./threeD":4}],2:[function(require,module,exports) {
+},{"./threeD":4}],2:[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var jump_1 = require("./jump");
@@ -41311,7 +41381,7 @@ function Module() {
 module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
-  var ws = new WebSocket('ws://' + window.location.hostname + ':63645/');
+  var ws = new WebSocket('ws://' + window.location.hostname + ':49331/');
   ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
 
