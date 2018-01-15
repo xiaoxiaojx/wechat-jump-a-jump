@@ -41071,7 +41071,7 @@ var ThreeD = /** @class */ (function () {
         this.lookAtPositin = { x: 0, y: 0, z: 0 };
         this.playerJumpStatus = JumpStatus.NOMAL;
         this.playerSpeed = { d: 0, y: 0 };
-        this.dynamicParms = Object.create(parms);
+        this.dynamicParms = parms;
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(6, window.innerWidth / window.innerHeight, 1, 10000);
         this.light1 = new THREE.AmbientLight(0xffffff, 0.8);
@@ -41238,6 +41238,7 @@ var ThreeD = /** @class */ (function () {
         this.player.position.y = 0;
         this.renderer.render(this.scene, this.camera);
         this.removeMouseListener();
+        this.dynamicParms.onPlayerFail();
     };
     ThreeD.prototype.moveCameraLook = function () {
         var lastCube = this.cubeItems[this.cubeItems.length - 1];
@@ -41276,6 +41277,7 @@ var ThreeD = /** @class */ (function () {
             case PositionRelation.CENTER:
                 this.playerJumpStatus = JumpStatus.NOMAL;
                 this.addCube();
+                this.dynamicParms.onPlayerSuccess();
                 setTimeout(function () { return _self.moveCameraLook(); }, 500);
                 break;
             case PositionRelation.EDGE:
@@ -41343,6 +41345,13 @@ exports.default = ThreeD;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var threeD_1 = require("./threeD");
+var Level;
+(function (Level) {
+    Level["EASY"] = "\u7B80\u5355";
+    Level["MEDIUM"] = "\u4E2D\u7B49";
+    Level["DIFFICULT"] = "\u56F0\u96BE";
+    Level["NONE"] = "NONE";
+})(Level || (Level = {}));
 var Jump = /** @class */ (function () {
     function Jump() {
         this.config = {
@@ -41358,16 +41367,107 @@ var Jump = /** @class */ (function () {
             playerDeep: 1,
             playerMinScale: 0.1,
             playerSpeedD: 0.004,
-            playerSpeedY: 0.008
+            playerSpeedY: 0.008,
+            onPlayerFail: this.gameOver.bind(this),
+            onPlayerSuccess: this.addScore.bind(this)
         };
         this.threeD = new threeD_1.default(this.config);
+        this.appDom = document.getElementById("app");
+        this.startDom = document.getElementById("jump_startGame");
+        this.restartDom = document.getElementById("jump_restartGame");
+        this.scoreDom = document.getElementById("score");
+        this.scoreTotalDom = document.getElementById("scoreTotal");
     }
+    Jump.prototype.updateConfigByLevel = function () {
+        var level = this.getLevel();
+        switch (level) {
+            case Level.EASY:
+                this.config.cubeDeep = 4;
+                this.config.cubeWidth = 4;
+                break;
+            case Level.MEDIUM:
+                this.config.cubeDeep = 4;
+                this.config.cubeWidth = 2;
+                break;
+            case Level.DIFFICULT:
+                this.config.cubeDeep = 2;
+                this.config.cubeWidth = 2;
+                break;
+        }
+    };
+    Jump.prototype.addScore = function () {
+        if (this.scoreTotalDom) {
+            var currentScoreTotal = Number(this.scoreTotalDom.innerHTML);
+            this.scoreTotalDom.innerHTML = String(100 + currentScoreTotal);
+        }
+    };
+    Jump.prototype.initScore = function () {
+        if (this.scoreTotalDom) {
+            this.scoreTotalDom.innerHTML = "0";
+        }
+    };
     Jump.prototype.addRestartListener = function () {
         var _self = this;
-        var restart = document.getElementById("restart");
-        restart.addEventListener("click", _self.gameRestart.bind(_self));
+        if (this.restartDom) {
+            this.restartDom.addEventListener("click", _self.gameRestart.bind(_self));
+            return true;
+        }
+        return false;
+    };
+    Jump.prototype.addStartListener = function () {
+        var _self = this;
+        if (this.startDom) {
+            this.startDom.addEventListener("click", _self.gameStart.bind(_self));
+            return true;
+        }
+        return false;
+    };
+    Jump.prototype.hiddenAppDom = function () {
+        if (this.appDom) {
+            this.appDom.style.display = "none";
+        }
+    };
+    Jump.prototype.showAppDom = function () {
+        if (this.appDom) {
+            this.appDom.style.display = "block";
+        }
+    };
+    Jump.prototype.hiddenStartDom = function () {
+        if (this.startDom) {
+            this.startDom.style.display = "none";
+        }
+    };
+    Jump.prototype.showRestartDom = function () {
+        if (this.restartDom) {
+            this.restartDom.style.display = "inline-block";
+        }
+    };
+    Jump.prototype.hiddenScoreDom = function () {
+        if (this.scoreDom) {
+            this.scoreDom.style.display = "none";
+        }
+    };
+    Jump.prototype.showScoreDom = function () {
+        if (this.scoreDom) {
+            this.scoreDom.style.display = "block";
+        }
+    };
+    Jump.prototype.getLevel = function () {
+        var select = document.getElementById("jump_select");
+        if (select) {
+            return select.value;
+        }
+        return Level.NONE;
+    };
+    Jump.prototype.startRender = function () {
+        this.addStartListener();
     };
     Jump.prototype.gameStart = function () {
+        this.hiddenAppDom();
+        this.showScoreDom();
+        this.hiddenStartDom();
+        this.showRestartDom();
+        this.updateConfigByLevel();
         this.threeD.initRender();
         this.threeD.initCamera();
         this.threeD.addCube();
@@ -41377,12 +41477,19 @@ var Jump = /** @class */ (function () {
         this.threeD.addMouseListener();
     };
     Jump.prototype.gameRestart = function () {
+        this.hiddenAppDom();
+        this.showScoreDom();
+        this.initScore();
+        this.updateConfigByLevel();
         this.threeD.initProperty();
         this.threeD.initCamera();
         this.threeD.addCube();
         this.threeD.addCube();
         this.threeD.addPlayer();
         this.threeD.addMouseListener();
+    };
+    Jump.prototype.gameOver = function () {
+        this.showAppDom();
     };
     return Jump;
 }());
@@ -41393,7 +41500,7 @@ exports.default = Jump;
 Object.defineProperty(exports, "__esModule", { value: true });
 var jump_1 = require("./jump");
 var jump = new jump_1.default();
-jump.gameStart();
+jump.startRender();
 //# sourceMappingURL=index.js.map
 },{"./jump":3}],0:[function(require,module,exports) {
 var global = (1, eval)('this');
@@ -41413,7 +41520,7 @@ function Module() {
 module.bundle.Module = Module;
 
 if (!module.bundle.parent && typeof WebSocket !== 'undefined') {
-  var ws = new WebSocket('ws://' + window.location.hostname + ':59280/');
+  var ws = new WebSocket('ws://' + window.location.hostname + ':57971/');
   ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
 

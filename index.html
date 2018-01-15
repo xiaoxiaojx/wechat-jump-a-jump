@@ -4,16 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>WeChat Jump A Jump</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-    </style>
+    <title>WeChat Jump a jump</title>
+    <link href="./index.css" rel="stylesheet">
 </head>
 <body>
-    <button id="restart">重新开始</button>
+    <div id="app">
+        <div>
+            <h1> 跳一跳 Web版 </h1>
+            <div>
+                <label> 难易程度: </label>
+                <select id="jump_select">
+                    <option value="简单">简单</option>
+                    <option value="中等">中等</option>
+                    <option value="困难">困难</option>
+                </select>
+            </div>
+            <div>
+                <button id="jump_startGame"> 开始游戏 </button>
+                <button id="jump_restartGame"> 重新开始 </button>
+            </div>
+        </div>
+    </div>
+    <div id="score">
+        <span>当前所得分数: </span>
+        <span id="scoreTotal">0</span>
+    </div>
     <script src="./index.ts"></script>
 </body>
 </html>

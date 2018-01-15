@@ -1,0 +1,80 @@
+body {
+    color: #4495fb;
+    margin: 0;
+    padding: 0;
+}
+
+#app {
+    position: absolute;
+    top: 0px;
+    background-color: rgba(37, 42, 47, 0.6);
+    height: 100%;
+    width: 100%;
+}
+
+#app > div:first-child {
+    position: relative;
+    margin: 100px auto;
+    width: 450px;
+    height: 450px;
+    background-color: rgba(37, 42, 47, 0.8);
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+#app > div > :nth-child(2) {
+    display: flex;
+    align-items: center;
+}
+
+#app > div > :last-child {
+    width: 100%;
+    position: absolute;
+    margin: 0 auto;
+    text-align: center;
+    bottom: 80px;
+}
+
+button {
+    display: inline-block;
+    margin: 0 auto;
+    font-size: 26px;
+    cursor: pointer;
+    color: #fff;
+    background-color: #4495fb;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    outline: none;
+}
+
+label {
+    margin-left: 50px;
+}
+
+select {
+    font-size: 18px;
+    outline: none;
+    margin-left: 30px;
+    height: 34px;
+    width: 150px;
+}
+
+h1 {
+    padding-top: 15px;
+    text-align: center;
+}
+
+#jump_restartGame {
+    display: none;
+}
+
+#score {
+    position: absolute;
+    width: 100%;
+    display: none;
+    text-align: center;
+    z-index: 100;
+    top: 30px;
+    font-size: 24px;
+}

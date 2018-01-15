@@ -49,11 +49,13 @@ export interface ThreeDParms {
     playerMinScale: number;
     playerSpeedD: number;
     playerSpeedY: number;
+    onPlayerFail: Function;
+    onPlayerSuccess: Function;
 }
 
 export default class ThreeD {
     constructor(parms: ThreeDParms) {
-        this.dynamicParms = Object.create(parms);
+        this.dynamicParms = parms;
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(6, window.innerWidth / window.innerHeight, 1, 10000);
         this.light1 = new THREE.AmbientLight(0xffffff, 0.8);
@@ -225,6 +227,7 @@ export default class ThreeD {
         this.player.position.y = 0;
         this.renderer.render(this.scene, this.camera);
         this.removeMouseListener();
+        this.dynamicParms.onPlayerFail();
     }
     private moveCameraLook(): void {
         const lastCube = this.cubeItems[this.cubeItems.length -1];
@@ -262,6 +265,7 @@ export default class ThreeD {
             case PositionRelation.CENTER:
                 this.playerJumpStatus = JumpStatus.NOMAL;
                 this.addCube();
+                this.dynamicParms.onPlayerSuccess();
                 setTimeout(() => _self.moveCameraLook(), 500)
                 break;
             case PositionRelation.EDGE:
