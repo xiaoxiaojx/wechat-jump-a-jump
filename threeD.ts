@@ -49,6 +49,7 @@ export interface ThreeDParms {
     playerMinScale: number;
     playerSpeedD: number;
     playerSpeedY: number;
+    listener: HTMLElement;
     onPlayerFail: Function;
     onPlayerSuccess: Function;
 }
@@ -62,7 +63,6 @@ export default class ThreeD {
         this.light2 = new THREE.DirectionalLight(0xffffff, 0.1);
         this.renderer = new THREE.WebGLRenderer({ antialias : true });
 
-        this.initLight();
         this.readyToJump = this.readyToJump.bind(this);
         this.recoveryScale = this.recoveryScale.bind(this);
         this.startFlight = this.startFlight.bind(this);
@@ -316,14 +316,12 @@ export default class ThreeD {
     }
     public addMouseListener(): void {
         const _self = this;
-        const canvas: HTMLCanvasElement = document.querySelector("canvas") as HTMLCanvasElement;
-        canvas.addEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
-        canvas.addEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
+        this.dynamicParms.listener.addEventListener(this.isPC() ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
+        this.dynamicParms.listener.addEventListener(this.isPC() ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
     }
     public removeMouseListener(): void {
         const _self = this;
-        const canvas: HTMLCanvasElement = document.querySelector("canvas") as HTMLCanvasElement;
-        canvas.removeEventListener(this.isPC ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
-        canvas.removeEventListener(this.isPC ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
+        this.dynamicParms.listener.removeEventListener(this.isPC() ? "mousedown" : "touchstart", _self.handleMousedown.bind(_self));
+        this.dynamicParms.listener.removeEventListener(this.isPC() ? "mouseup" : "touchend", _self.handleMouseup.bind(_self));
     }
 }

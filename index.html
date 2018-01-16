@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>WeChat Jump a jump</title>
     <link href="./index.css" rel="stylesheet">
 </head>
 <body>
-    <div id="app">
+    <div id="jump_app">
         <div>
             <h1> 跳一跳 Web版 </h1>
             <div>
@@ -20,14 +20,14 @@
                 </select>
             </div>
             <div>
-                <button id="jump_startGame"> 开始游戏 </button>
-                <button id="jump_restartGame"> 重新开始 </button>
+                <button id="jump_startGame" class="jump_gameBtn"> 开始游戏 </button>
+                <button id="jump_restartGame" class="jump_gameBtn"> 重新开始 </button>
             </div>
         </div>
     </div>
-    <div id="score">
+    <div id="jump_score">
         <span>当前所得分数: </span>
-        <span id="scoreTotal">0</span>
+        <span id="jump_scoreTotal">0</span>
     </div>
     <script src="./index.ts"></script>
 </body>

@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import ThreeD, {
     ThreeDParms
 } from "./threeD";
@@ -16,11 +15,11 @@ interface JumpConfig extends ThreeDParms {
 class Jump {
     constructor() {
         this.threeD = new ThreeD(this.config);
-        this.appDom = document.getElementById("app") as HTMLDivElement;
+        this.appDom = document.getElementById("jump_app") as HTMLDivElement;
         this.startDom = document.getElementById("jump_startGame") as HTMLButtonElement;
         this.restartDom = document.getElementById("jump_restartGame") as HTMLButtonElement;
-        this.scoreDom = document.getElementById("score") as HTMLDivElement;
-        this.scoreTotalDom = document.getElementById("scoreTotal") as HTMLSpanElement;
+        this.scoreDom = document.getElementById("jump_score") as HTMLDivElement;
+        this.scoreTotalDom = document.getElementById("jump_scoreTotal") as HTMLSpanElement;
     }
     private readonly config: JumpConfig = {
         renderClearColor: "#fbde9f",
@@ -36,6 +35,7 @@ class Jump {
         playerMinScale: 0.1,
         playerSpeedD: 0.004,
         playerSpeedY: 0.008,
+        listener: this.getListener(),
         onPlayerFail: this.gameOver.bind(this),
         onPlayerSuccess: this.addScore.bind(this)
     }
@@ -45,6 +45,7 @@ class Jump {
     private readonly appDom: HTMLDivElement;
     private readonly scoreDom: HTMLDivElement;
     private readonly scoreTotalDom: HTMLSpanElement;
+    private readonly mobileSubDom: HTMLButtonElement;
 
     private updateConfigByLevel(): void {
         const level = this.getLevel();
@@ -72,6 +73,14 @@ class Jump {
     private initScore(): void {
         if (this.scoreTotalDom) {
             this.scoreTotalDom.innerHTML = "0";
+        }
+    }
+    private getListener(): HTMLElement {
+        return document.querySelector("canvas") || document.body;
+    }
+    private preventDefault (): void {
+        document.oncontextmenu = (e) => {
+            e.preventDefault();
         }
     }
     private addRestartListener(): boolean {
@@ -110,11 +119,6 @@ class Jump {
             this.restartDom.style.display = "inline-block";
         }
     }
-    private hiddenScoreDom(): void {
-        if (this.scoreDom) {
-            this.scoreDom.style.display = "none";
-        }
-    }
     private showScoreDom(): void {
         if (this.scoreDom) {
             this.scoreDom.style.display = "block";
@@ -128,8 +132,9 @@ class Jump {
         return Level.NONE;
     }
 
-    public startRender(): void {
+    public gameRender(): void {
         this.addStartListener();
+        this.preventDefault();
     }
     public gameStart(): void {
         this.hiddenAppDom();
@@ -139,6 +144,7 @@ class Jump {
         this.updateConfigByLevel();
         this.threeD.initRender();
         this.threeD.initCamera();
+        this.threeD.initLight();
         this.threeD.addCube();
         this.threeD.addCube();
         this.threeD.addPlayer();

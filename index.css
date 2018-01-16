@@ -1,10 +1,19 @@
+* {
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    -khtml-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+}
+
 body {
     color: #4495fb;
     margin: 0;
     padding: 0;
 }
 
-#app {
+#jump_app {
     position: absolute;
     top: 0px;
     background-color: rgba(37, 42, 47, 0.6);
@@ -12,22 +21,23 @@ body {
     width: 100%;
 }
 
-#app > div:first-child {
+#jump_app > div:first-child {
     position: relative;
-    margin: 100px auto;
+    margin: 12% auto 0;
     width: 450px;
     height: 450px;
+    max-width: 100%;
     background-color: rgba(37, 42, 47, 0.8);
     border-radius: 6px;
     box-sizing: border-box;
 }
 
-#app > div > :nth-child(2) {
+#jump_app > div > :nth-child(2) {
     display: flex;
     align-items: center;
 }
 
-#app > div > :last-child {
+#jump_app > div > :last-child {
     width: 100%;
     position: absolute;
     margin: 0 auto;
@@ -35,7 +45,7 @@ body {
     bottom: 80px;
 }
 
-button {
+.jump_gameBtn {
     display: inline-block;
     margin: 0 auto;
     font-size: 26px;
@@ -69,7 +79,7 @@ h1 {
     display: none;
 }
 
-#score {
+#jump_score {
     position: absolute;
     width: 100%;
     display: none;
