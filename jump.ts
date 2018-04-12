@@ -145,6 +145,7 @@ class Jump {
         this.threeD.initRender();
         this.threeD.initCamera();
         this.threeD.initLight();
+        this.threeD.addFloor();
         this.threeD.addCube();
         this.threeD.addCube();
         this.threeD.addPlayer();

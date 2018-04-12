@@ -86,7 +86,8 @@ export default class ThreeD {
     }
     public initLight(): void {
         this.light1.position.set(0, 0, 100);
-        this.light2.position.set(8, 3, 0);
+        this.light2.position.set(5, 2, -5);
+        this.light2.castShadow = true;
         this.scene.add(this.light1);
         this.scene.add(this.light2);
     }
@@ -96,6 +97,8 @@ export default class ThreeD {
         this.renderer.setClearColor(new THREE.Color(renderClearColor), 1.0);
         document.body.appendChild(this.renderer.domElement);
         this.renderer.clear();
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
         this.renderer.render(this.scene, this.camera);
     }
     public initProperty(): void {
@@ -107,6 +110,15 @@ export default class ThreeD {
         this.cubeItems = [];
         this.renderer.render(this.scene, this.camera);
     }
+    public addFloor(): void {
+        const material = new THREE.MeshLambertMaterial({color: new THREE.Color(this.dynamicParms.renderClearColor)});
+        const geometry = new THREE.CubeGeometry(window.innerWidth, 1, window.innerHeight);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.receiveShadow = true;
+        mesh.position.y = -1;
+        this.scene.add(mesh);
+        this.renderer.render(this.scene, this.camera);
+    }
     public addPlayer(): void {
         const { playerColor, playerWidth, playerDeep, playerheight } = this.dynamicParms;
         const material = new THREE.MeshLambertMaterial({color: new THREE.Color(playerColor)});
@@ -114,6 +126,7 @@ export default class ThreeD {
         geometry.translate(0, playerDeep, 0); 
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(0, 1, 0);
+        mesh.castShadow = true;
         this.player = mesh;
         this.scene.add(mesh);
         this.renderer.render(this.scene, this.camera);
@@ -143,10 +156,12 @@ export default class ThreeD {
                     z: lastCube.position.z
                 }
         }
-        if ( this.cubeItems.length >= 10) {
+        if ( this.cubeItems.length >= 6) {
             this.scene.remove(this.cubeItems.shift() as THREE.Mesh);
         }
         mesh.position.set(position.x, position.y, position.z);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
         this.cubeItems.push(mesh)
         this.scene.add(mesh);
         this.renderer.render(this.scene, this.camera);
