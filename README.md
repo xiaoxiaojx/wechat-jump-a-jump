@@ -5,7 +5,7 @@
 > The simple implementation of the web version of the WeChat jump game, Support the mobile end and the web end.
 
 1. how to play?
-> [Click here, Quick play game](http://47.100.96.203/WeChatJump/index.html)
+> [Click here, Quick play game](https://xiaoxiaojx.github.io/wechat-jump-a-jump/dist/)
 
 2. how to dev?
 ```
